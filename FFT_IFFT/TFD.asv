@@ -1,0 +1,123 @@
+close all;
+
+
+figure ; 
+title("image de base") ;
+imshow(image) ;
+
+image = imread("cristiano.jpg") ; 
+if size(image, 3) == 3
+    image = rgb2gray(image);
+end
+
+
+
+
+% verification du TFD 1D
+
+G = [45 156 222 1];
+Four1 = TFD_1D(4,G)
+Inv1 = abs(iTFD_1D(4,Four1))
+
+%verification du TFD 2D sans image
+
+I = [124 223 34 67;
+    45 56 76 222;
+    45 58 244 222;
+    45 56 76 222;
+    45 56 76 222;
+    45 56 76 222;
+    45 56 76 222;
+    45 56 76 222];
+Four2 = TFD_2D(I)
+Inv2 = abs(iTFD_2D(Four2))
+
+
+%verification du TFD 2D  avec image 
+
+F = TFD_2D(image);
+figure;
+title('Transformé de fourrier discrète');
+imshow(F);
+
+restored_image  =iTFD_2D(F) ; 
+figure ; 
+title('Transformé de fourrier inverse ');
+imshow(uint8(restored_image)) ; 
+
+
+
+% transformé de fourrier discrète  1D
+
+function fourier_transform = TFD_1D(N, image)
+    fourier_transform = zeros(1, N);  % Initialisation de la sortie
+    
+    for u = 1:N
+        som = 0;
+        
+        for x = 1:N
+            pixelVal = double(image(x));
+            som = som + pixelVal * exp(-2i * pi * (u-1) * (x-1) / N);
+        end
+        
+        fourier_transform(u) = som;
+    end
+end
+
+
+
+
+
+% transformé de fourrier discrète  2D
+
+function Y = TFD_2D(image)
+    [N, M] = size(image);
+    fourier_transform = zeros(N, M);
+
+    for u = 1:N
+        fourier_transform(u, :) = TFD_1D(M, image(u, :));
+    end
+
+    for v = 1:M
+        fourier_transform(:, v) = TFD_1D(N, fourier_transform(:, v));
+    end
+
+    Y = fourier_transform;
+end
+
+
+
+% transformé de fourrier discrète inverse  1D
+
+function image = iTFD_1D(N, fourier_transform)
+    image = zeros(1, N);  % Initialisation de la sortie
+    
+    for x = 1:N
+        som = 0;
+        
+        for u = 1:N
+            som = som + fourier_transform(u) * exp(2i * pi * (u-1) * (x-1) / N);
+        end
+        
+        image(x) = som / N;
+    end
+end
+
+
+
+
+
+% transformé de fourrier discrète  inverse 2D
+
+function Y = iTFD_2D(fourier_transform)
+    [N, M] = size(fourier_transform);
+    Y = zeros(N, M);
+
+    for u = 1:N
+        Y(u, :) = iTFD_1D(M, fourier_transform(u, :));
+    end
+
+    for v = 1:M
+        Y(:, v) = iTFD_1D(N, Y(:, v));
+    end
+end
